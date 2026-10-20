@@ -522,7 +522,6 @@ async function openDetail(id, fly){
     catch (ex) { toast(ex && ex.message ? ex.message : '更新できませんでした'); tg.disabled = false; }
   });
   acts.append(tg); d.append(acts);
-  const back2 = el('button', 'ghost back-wide', '一覧に戻る'); back2.type = 'button'; back2.addEventListener('click', closeDetail); d.append(back2);
   $('detail-modal').hidden = false; d.scrollTop = 0;
   renderPins();
 }

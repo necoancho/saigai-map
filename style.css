@@ -178,7 +178,6 @@ textarea.input{resize:vertical;min-height:6.5em}
 .detail .head h2{flex:1;text-align:center;font-size:1rem}
 .back-btn{background:none;border:0;color:var(--accent);font-weight:700;padding:6px 0;min-width:6.5em;text-align:left;white-space:nowrap}
 .head-spacer{min-width:6.5em}
-.back-wide{width:100%;margin-top:4px}
 .close{background:none;border:0;font-size:1.6rem;line-height:1;color:var(--muted);padding:2px 8px}
 .detail img.photo{width:100%;border-radius:12px;background:var(--surface-2);min-height:120px;object-fit:contain;max-height:45vh;max-height:45svh}
 .photo-ph{border:1px dashed var(--line);border-radius:12px;padding:20px;text-align:center;color:var(--muted);font-size:.85rem}
