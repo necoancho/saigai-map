@@ -72,7 +72,7 @@ function areaBounds(scale = 1){
 function show(id){
   ['scr-camera', 'scr-form', 'scr-map'].forEach(s => $(s).hidden = s !== id);
   if (id === 'scr-camera') startCamera(); else stopCamera();
-  if (id === 'scr-map') setTimeout(() => bigmap && bigmap.invalidateSize(), 50);
+  if (id === 'scr-map') setTimeout(() => { barH(); bigmap && bigmap.invalidateSize(); }, 50);
   if (id === 'scr-form') setTimeout(() => minimap && minimap.invalidateSize(), 50);
 }
 
@@ -415,7 +415,10 @@ function renderList(){
 }
 /* 投稿一覧のシート：上下にスライドして「見出しだけ／3割／8割」を切り替える */
 const SHEET_ORDER = ['min', 'mid', 'max'];
+// 上部の見出し（地図名・件数）の高さ。一覧はこの下端までしか上げない
+function barH(){ const b = document.querySelector('#scr-map .map-bar'); const h = b ? b.getBoundingClientRect().height : 0; $('scr-map').style.setProperty('--bar-h', h + 'px'); return h; }
 function setSheet(state){
+  barH();
   $('scr-map').dataset.sheet = state;
   const sh = $('sheet-list'); sh.style.height = '';
   $('btn-sheet').setAttribute('aria-expanded', String(state !== 'min'));
@@ -424,7 +427,7 @@ function setupSheetDrag(){
   const sh = $('sheet-list'), grab = $('btn-sheet');
   let startY = 0, startH = 0, moved = false, active = false;
   const heights = () => {
-    const vh = $('scr-map').clientHeight; const min = $('btn-sheet').offsetHeight + parseFloat(getComputedStyle(sh).paddingBottom || 0);
+    const vh = $('scr-map').clientHeight - barH(); const min = $('btn-sheet').offsetHeight + parseFloat(getComputedStyle(sh).paddingBottom || 0);
     return {min, mid: vh * 0.34, max: vh};
   };
   const down = e => {
@@ -622,6 +625,7 @@ async function boot(){
   $('post-form').addEventListener('submit', submit);
   setupSheetDrag();
   setSheet('min');
+  window.addEventListener('resize', barH);
   $('show-done').addEventListener('change', e => { showDone = e.target.checked; render(); });
   $('btn-locate').addEventListener('click', () => { if (gps) bigmap.flyTo([gps.lat, gps.lng], 17, {duration: .5}); else toast(gpsError || '現在地をまだ取得できていません'); });
   $('detail-modal').addEventListener('click', e => { if (e.target === $('detail-modal')) closeDetail(); });
