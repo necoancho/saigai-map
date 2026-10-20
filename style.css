@@ -167,15 +167,20 @@ textarea.input{resize:vertical;min-height:6.5em}
 
 /* ---------- モーダル ---------- */
 .modal{position:fixed;inset:0;z-index:2000;background:rgb(10 14 20 / .55);display:flex;align-items:flex-end;justify-content:center}
-.modal-card{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:16px max(18px,var(--sar)) calc(var(--sab) + 18px) max(18px,var(--sal));display:flex;flex-direction:column;gap:12px}
+.modal-card{background:var(--surface);width:100%;max-width:560px;max-height:calc(100% - var(--sat) - 12px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:18px 18px 0 0;padding:16px max(18px,var(--sar)) calc(var(--sab) + 18px) max(18px,var(--sal));display:flex;flex-direction:column;gap:12px}
 .modal-card h2{margin:0;font-size:1.1rem}
 .modal-card p{margin:0}
 .join p{font-size:.9rem;color:var(--muted)}
 .modal-actions{display:flex;gap:10px;align-items:center}
 .modal-actions .primary{flex:1}
-.detail .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+/* 詳細の見出しはスクロールしても上に残し、いつでも一覧に戻れるようにする */
+.detail .head{position:sticky;top:-16px;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface);margin:-16px calc(-1 * max(18px,var(--sal))) 0;padding:12px max(18px,var(--sar)) 10px max(18px,var(--sal));border-bottom:1px solid var(--line)}
+.detail .head h2{flex:1;text-align:center;font-size:1rem}
+.back-btn{background:none;border:0;color:var(--accent);font-weight:700;padding:6px 0;min-width:6.5em;text-align:left;white-space:nowrap}
+.head-spacer{min-width:6.5em}
+.back-wide{width:100%;margin-top:4px}
 .close{background:none;border:0;font-size:1.6rem;line-height:1;color:var(--muted);padding:2px 8px}
-.detail img.photo{width:100%;border-radius:12px;background:var(--surface-2);min-height:120px;object-fit:contain;max-height:60vh}
+.detail img.photo{width:100%;border-radius:12px;background:var(--surface-2);min-height:120px;object-fit:contain;max-height:45vh;max-height:45svh}
 .photo-ph{border:1px dashed var(--line);border-radius:12px;padding:20px;text-align:center;color:var(--muted);font-size:.85rem}
 .d-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:1rem}
 .dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:0;font-size:.88rem}

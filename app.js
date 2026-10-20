@@ -487,11 +487,12 @@ function renderPins(){
 async function openDetail(id, fly){
   const r = reports.find(x => x.id === id); if (!r) return;
   selected = id;
+  detailReturnSheet = $('scr-map').dataset.sheet; // 一覧に戻ったとき元の大きさに戻す
   if (fly && r.lat != null){ bigmap.flyTo([r.lat, r.lng], Math.max(bigmap.getZoom(), 16), {duration: .5}); setSheet('min'); }
   const d = $('detail'); d.textContent = '';
   const head = el('div', 'head'); const h = el('h2', null, catOf(r.cat).label); h.id = 'd-title';
-  const x = el('button', 'close', '×'); x.type = 'button'; x.setAttribute('aria-label', '閉じる'); x.addEventListener('click', closeDetail);
-  head.append(h, x); d.append(head);
+  const back = el('button', 'back-btn', '‹ 一覧に戻る'); back.type = 'button'; back.addEventListener('click', closeDetail);
+  head.append(back, h, el('span', 'head-spacer')); d.append(head);
   const meta = el('div', 'meta'); meta.append(pinEl(r), el('span', 'lv ' + (r.status === 'resolved' ? 'done' : lvOf(r.level).k), r.status === 'resolved' ? '解消済み' : lvOf(r.level).label));
   if (r.pending) meta.append(el('span', 'lv pend', '未送信（つながったら送信）'));
   d.append(meta);
@@ -521,10 +522,15 @@ async function openDetail(id, fly){
     catch (ex) { toast(ex && ex.message ? ex.message : '更新できませんでした'); tg.disabled = false; }
   });
   acts.append(tg); d.append(acts);
-  $('detail-modal').hidden = false;
+  const back2 = el('button', 'ghost back-wide', '一覧に戻る'); back2.type = 'button'; back2.addEventListener('click', closeDetail); d.append(back2);
+  $('detail-modal').hidden = false; d.scrollTop = 0;
   renderPins();
 }
-function closeDetail(){ $('detail-modal').hidden = true; selected = null; renderPins(); }
+let detailReturnSheet = null;
+function closeDetail(){
+  $('detail-modal').hidden = true; selected = null; renderPins();
+  if (detailReturnSheet){ setSheet(detailReturnSheet); detailReturnSheet = null; }
+}
 
 /* =========================================================
    保存先：端末内（お試しモード）
