@@ -1,0 +1,57 @@
+rules_version = '2';
+// 災害情報マップ用のセキュリティルール
+// ・閲覧：誰でも可
+// ・投稿：合言葉で登録した端末のみ
+// ・合言葉は passcodes コレクションの「ドキュメントID」として登録（中身は空でよい）
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isMember() {
+      return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid));
+    }
+
+    // 合言葉：アプリからは読めない・書けない（Firebase コンソールで管理）
+    match /passcodes/{code} {
+      allow read, write: if false;
+    }
+
+    // 合言葉が正しい場合だけ、自分の端末を登録できる
+    match /members/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code', 'joinedAt'])
+        && request.resource.data.code is string
+        && exists(/databases/$(database)/documents/passcodes/$(request.resource.data.code));
+      allow list, update, delete: if false;
+    }
+
+    // 投稿
+    match /reports/{id} {
+      allow read: if true;
+      allow create: if isMember()
+        && request.resource.data.author == request.auth.uid
+        && request.resource.data.text is string && request.resource.data.text.size() <= 1000
+        && request.resource.data.cat is string
+        && request.resource.data.level in ['urgent', 'caution', 'info']
+        && request.resource.data.status == 'open'
+        && (!('thumb' in request.resource.data) || request.resource.data.thumb == null
+            || (request.resource.data.thumb is string && request.resource.data.thumb.size() < 60000));
+      // 解消済み／対応中の切り替えだけ許可
+      allow update: if isMember()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])
+        && request.resource.data.status in ['open', 'resolved'];
+      allow delete: if false;
+    }
+
+    // 写真（投稿と同じIDで保存）
+    match /photos/{id} {
+      allow read: if true;
+      allow create: if isMember()
+        && request.resource.data.author == request.auth.uid
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 900000;
+      allow update, delete: if false;
+    }
+  }
+}

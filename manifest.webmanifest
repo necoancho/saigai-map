@@ -1,0 +1,17 @@
+{
+  "name": "松永地区 災害情報マップ",
+  "short_name": "災害マップ",
+  "description": "被害や危険箇所を撮影して、位置つきで共有する災害情報マップ",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#11161c",
+  "theme_color": "#11161c",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
