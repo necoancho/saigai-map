@@ -1,5 +1,5 @@
 // オフライン対応：アプリ本体と、一度表示した地図タイルを端末に保存する
-const APP = 'saigai-app-v3';
+const APP = 'saigai-app-v4';
 const TILES = 'saigai-tiles-v1';
 const TILE_LIMIT = 3000;
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest.webmanifest',
@@ -7,7 +7,7 @@ const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest
   'lib/leaflet/leaflet.css', 'lib/leaflet/leaflet.js', 'lib/leaflet/images/marker-icon.png', 'lib/leaflet/images/marker-icon-2x.png', 'lib/leaflet/images/marker-shadow.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'})))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP && k !== TILES).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -31,7 +31,9 @@ self.addEventListener('fetch', e => {
     return;
   }
   // アプリ本体・ライブラリ：通信できれば最新、できなければ保存済み
-  e.respondWith(fetch(req).then(res => {
+  // 自サイトのファイルはブラウザのキャッシュを使わず、必ず最新を確認する
+  const net = url.origin === location.origin ? fetch(req, {cache: 'no-cache'}) : fetch(req);
+  e.respondWith(net.then(res => {
     if (res.ok && (url.origin === location.origin || url.hostname === 'www.gstatic.com')){
       const copy = res.clone(); caches.open(APP).then(c => c.put(req, copy));
     }

@@ -621,6 +621,7 @@ async function boot(){
   });
   $('post-form').addEventListener('submit', submit);
   setupSheetDrag();
+  setSheet('min');
   $('show-done').addEventListener('change', e => { showDone = e.target.checked; render(); });
   $('btn-locate').addEventListener('click', () => { if (gps) bigmap.flyTo([gps.lat, gps.lng], 17, {duration: .5}); else toast(gpsError || '現在地をまだ取得できていません'); });
   $('detail-modal').addEventListener('click', e => { if (e.target === $('detail-modal')) closeDetail(); });
@@ -636,6 +637,16 @@ async function boot(){
   if (store.mode === 'local') $('mode-chip').hidden = false;
   store.onReports(list => { reports = list; render(); });
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator){
+    // 新しい版が届いたら、入力中でなければ1回だけ読み込み直して最新にする
+    const hadController = !!navigator.serviceWorker.controller; let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      const reload = () => { if (reloaded) return; reloaded = true; location.reload(); };
+      if (!draft) reload(); else toast('アプリが更新されました。投稿後に自動で最新になります', 5000);
+      const t = setInterval(() => { if (!draft){ clearInterval(t); reload(); } }, 2000);
+    });
+    navigator.serviceWorker.register('sw.js').then(r => r.update()).catch(() => {});
+  }
 }
 boot();
