@@ -29,7 +29,7 @@
   </div>
 
   <header class="cam-top">
-    <div class="gps-chip" id="gps-chip"><span class="dot"></span><span id="gps-text">位置を取得中…</span></div>
+    <button class="gps-chip" id="gps-chip" type="button"><span class="dot"></span><span id="gps-text">位置を取得中…</span></button>
     <div class="mode-chip" id="mode-chip" hidden>お試しモード</div>
   </header>
 
@@ -100,7 +100,7 @@
 </section>
 
 <!-- ============ 地図 ============ -->
-<section class="screen map-scr" id="scr-map" hidden aria-label="地図">
+<section class="screen map-scr" id="scr-map" data-sheet="min" hidden aria-label="地図">
   <header class="bar map-bar">
     <div class="map-title">
       <h1 id="map-title">災害情報マップ</h1>
@@ -113,7 +113,7 @@
   </button>
 
   <div class="sheet-list" id="sheet-list">
-    <button class="grabber" id="btn-sheet" type="button" aria-expanded="false"><span></span><b id="sheet-label">投稿一覧</b></button>
+    <button class="grabber" id="btn-sheet" type="button" aria-expanded="false" aria-label="投稿一覧を開く（上下にスライドで大きさを変更）"><span></span><b id="sheet-label">投稿一覧</b></button>
     <div class="list-tools">
       <div class="filters" id="filters"></div>
       <label class="toggle"><input type="checkbox" id="show-done"> 解消済みも表示</label>
@@ -145,6 +145,18 @@
       <button class="primary" type="submit" id="join-submit">確認して投稿</button>
     </div>
   </form>
+</div>
+
+<!-- 位置情報のヘルプ -->
+<div class="modal" id="gps-help" hidden>
+  <div class="modal-card gps-help" role="dialog" aria-modal="true" aria-labelledby="gps-help-title">
+    <h2 id="gps-help-title">位置情報を使うには</h2>
+    <div id="gps-help-body"></div>
+    <div class="modal-actions">
+      <button class="text-btn" type="button" id="gps-close">閉じる</button>
+      <button class="primary" type="button" id="gps-retry">もう一度試す</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast" role="status" hidden></div>

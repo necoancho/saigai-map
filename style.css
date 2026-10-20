@@ -32,6 +32,13 @@ button{cursor:pointer}
 .cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cam-top{position:absolute;left:0;right:0;top:0;padding:calc(var(--sat) + 12px) max(16px,var(--sar)) 12px max(16px,var(--sal));display:flex;gap:8px;justify-content:space-between;align-items:flex-start;background:linear-gradient(rgb(0 0 0 / .55),transparent)}
 .gps-chip,.mode-chip{display:inline-flex;align-items:center;gap:8px;background:rgb(0 0 0 / .55);border:1px solid rgb(255 255 255 / .25);border-radius:999px;padding:6px 12px;font-size:.85rem}
+.gps-chip{color:#fff;cursor:pointer;min-width:0;text-align:left}
+.mode-chip{white-space:nowrap;flex:none}
+.gps-help h3{margin:6px 0 0;font-size:.95rem}
+.gps-help ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.gps-help p{font-size:.92rem}
+#gps-help-body{display:flex;flex-direction:column;gap:8px}
+.loc-note{cursor:pointer}
 .gps-chip .dot{width:9px;height:9px;border-radius:50%;background:#f2c14e}
 .gps-chip.ok .dot{background:#4ade80}
 .gps-chip.bad .dot{background:#ff6b6b}
@@ -115,9 +122,15 @@ textarea.input{resize:vertical;min-height:6.5em}
 .locate-btn{position:absolute;right:max(12px,var(--sar));top:calc(var(--sat) + 76px);z-index:600;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;box-shadow:0 2px 8px rgb(0 0 0 / .15)}
 .locate-btn svg{width:24px;height:24px}
 
-.sheet-list{position:absolute;left:0;right:0;bottom:0;z-index:700;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgb(0 0 0 / .18);max-height:30vh;display:flex;flex-direction:column;transition:max-height .25s ease;padding:0 max(14px,var(--sar)) calc(var(--sab) + 84px) max(14px,var(--sal))}
-.sheet-list.open{max-height:78vh}
-.grabber{background:none;border:0;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.sheet-list{position:absolute;left:0;right:0;bottom:0;z-index:700;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgb(0 0 0 / .18);height:34vh;display:flex;flex-direction:column;overflow:hidden;transition:height .25s ease;padding:0 max(14px,var(--sar)) calc(var(--sab) + 84px) max(14px,var(--sal));touch-action:none}
+.sheet-list.dragging{transition:none}
+/* 一覧の3段階：min＝見出しだけ／mid＝3割／max＝8割 */
+.map-scr[data-sheet="min"] .sheet-list{height:calc(var(--sab) + 52px);padding-bottom:var(--sab)}
+.map-scr[data-sheet="min"] .list-tools,.map-scr[data-sheet="min"] .list,.map-scr[data-sheet="min"] .empty{visibility:hidden}
+.map-scr[data-sheet="max"] .sheet-list{height:80vh}
+.map-scr[data-sheet="min"] .fab{bottom:calc(var(--sab) + 64px)}
+.sheet-list .list{touch-action:pan-y}
+.grabber{background:none;border:0;padding:10px 0 8px;cursor:grab;touch-action:none;flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
 .grabber span{width:40px;height:5px;border-radius:3px;background:var(--line)}
 .grabber b{font-size:.9rem}
 .list-tools{display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
@@ -148,7 +161,7 @@ textarea.input{resize:vertical;min-height:6.5em}
 .txt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:.92rem}
 .sub{font-size:.75rem;color:var(--muted)}
 .empty{color:var(--muted);font-size:.9rem;margin:8px 0}
-.fab{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 18px);z-index:800;display:flex;gap:8px;align-items:center;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 24px;font-weight:700;font-size:1rem;box-shadow:0 6px 18px rgb(0 0 0 / .3);white-space:nowrap}
+.fab{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 18px);transition:bottom .25s ease;z-index:800;display:flex;gap:8px;align-items:center;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 24px;font-weight:700;font-size:1rem;box-shadow:0 6px 18px rgb(0 0 0 / .3);white-space:nowrap}
 .fab svg{width:22px;height:22px}
 
 /* ---------- モーダル ---------- */
@@ -176,8 +189,9 @@ a{color:var(--accent)}
 @media (min-width:760px){
   .modal{align-items:center}
   .modal-card{border-radius:18px}
-  .sheet-list{left:auto;right:max(16px,var(--sar));top:calc(var(--sat) + 76px);bottom:16px;width:380px;max-height:none;border-radius:16px;padding-bottom:16px}
-  .sheet-list.open{max-height:none}
+  .sheet-list,.map-scr[data-sheet] .sheet-list{left:auto;right:max(16px,var(--sar));top:calc(var(--sat) + 76px);bottom:16px;width:380px;height:auto;border-radius:16px;padding-bottom:16px}
+  .map-scr[data-sheet] .list-tools,.map-scr[data-sheet] .list,.map-scr[data-sheet] .empty{visibility:visible}
+  .map-scr[data-sheet] .fab{bottom:calc(var(--sab) + 18px)}
   .grabber{pointer-events:none}
   .grabber span{display:none}
   .locate-btn{right:auto;left:max(12px,var(--sal))}

@@ -133,22 +133,65 @@ async function readExifGps(file){
 /* =========================================================
    位置情報
    ========================================================= */
+let gpsWatch = null, gpsCode = 0;
+const GPS_MSG = {
+  0: '位置を取得中…',
+  1: '位置情報が許可されていません',
+  2: '位置を特定できません',
+  3: '位置の取得に時間がかかっています',
+  9: 'この端末では位置情報を使えません',
+  8: 'https で開いていないため位置情報を使えません',
+};
+function onPos(p){
+  gps = {lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), time: p.timestamp};
+  gpsError = null; gpsCode = 0; renderGps(); onGpsForDraft(); updateMeMarker();
+}
+function onPosErr(e){
+  if (gps && Date.now() - gps.time < 120000) return; // 直前の位置が新しければそのまま使う
+  gpsCode = e.code || 2; gpsError = GPS_MSG[gpsCode] || GPS_MSG[2]; renderGps();
+  // 高精度で取れないときは、精度を落として1回試す
+  if (gpsCode !== 1) navigator.geolocation.getCurrentPosition(onPos, () => {}, {enableHighAccuracy: false, maximumAge: 60000, timeout: 20000});
+}
 function startGps(){
-  if (!('geolocation' in navigator)){ gpsError = 'この端末では位置情報を使えません'; renderGps(); return; }
-  navigator.geolocation.watchPosition(p => {
-    gps = {lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), time: p.timestamp};
-    gpsError = null; renderGps(); onGpsForDraft(); updateMeMarker();
-  }, e => {
-    gpsError = e.code === 1 ? '位置情報の利用が許可されていません' : '位置を取得できません';
-    renderGps();
-  }, {enableHighAccuracy: true, maximumAge: 10000, timeout: 30000});
+  if (!window.isSecureContext){ gpsCode = 8; gpsError = GPS_MSG[8]; renderGps(); return; }
+  if (!('geolocation' in navigator)){ gpsCode = 9; gpsError = GPS_MSG[9]; renderGps(); return; }
+  if (gpsWatch != null) navigator.geolocation.clearWatch(gpsWatch);
+  gpsWatch = navigator.geolocation.watchPosition(onPos, onPosErr, {enableHighAccuracy: true, maximumAge: 10000, timeout: 30000});
+}
+// ボタン操作から呼ぶ再取得（iPhone は操作をきっかけにすると許可の確認が出やすい）
+function retryGps(){
+  gpsCode = 0; gpsError = null; renderGps();
+  navigator.geolocation.getCurrentPosition(p => { onPos(p); startGps(); }, e => { onPosErr(e); openGpsHelp(); }, {enableHighAccuracy: true, maximumAge: 0, timeout: 20000});
 }
 function renderGps(){
   const chip = $('gps-chip'), t = $('gps-text');
   chip.classList.remove('ok', 'bad');
-  if (gps){ chip.classList.add('ok'); t.textContent = `位置OK（誤差 約${gps.acc}m）`; }
-  else if (gpsError){ chip.classList.add('bad'); t.textContent = gpsError; }
-  else t.textContent = '位置を取得中…';
+  if (gps && !gpsError){ chip.classList.add('ok'); t.textContent = `位置OK（誤差 約${gps.acc}m）`; }
+  else if (gpsError){ chip.classList.add('bad'); t.textContent = gpsError + '（タップで対処法）'; }
+  else t.textContent = GPS_MSG[0];
+  if (draft) renderLocNote();
+}
+function openGpsHelp(){
+  const box = $('gps-help-body'); box.textContent = '';
+  const add = (tag, text) => box.append(el(tag, null, text));
+  add('p', '現在の状態：' + (gpsError || (gps ? `取得できています（誤差 約${gps.acc}m）` : GPS_MSG[0])));
+  if (gpsCode === 1){
+    add('h3', 'iPhone の場合');
+    const ol = el('ol');
+    ['「設定」アプリ →「プライバシーとセキュリティ」→「位置情報サービス」をオンにする',
+     '同じ画面の下の方にある「Safari Webサイト」を開き、「使用中」などの許可する設定にする（「なし」だと使えません）',
+     'Safari でこのページを開き、アドレスバー左の表示（「ぁあ」など）から Web サイトの設定を開き、「位置情報」を「許可」または「確認」にする',
+     'このアプリを一度閉じて、もう一度開く'].forEach(x => ol.append(el('li', null, x)));
+    box.append(ol);
+    add('h3', 'Android の場合');
+    add('p', 'Chrome でこのページを開き、アドレスバー左のアイコン →「権限」→「位置情報」を許可にしてください。');
+  } else if (gpsCode === 8){
+    add('p', 'アドレスが https:// で始まるページで開いてください。');
+  } else {
+    add('p', '屋内や建物のかげでは、取得に時間がかかったり、できなかったりします。屋外の空が見える場所で「もう一度試す」を押してください。');
+    add('p', '取得できない場合でも、入力画面の地図をタップすれば位置を指定して投稿できます。');
+  }
+  $('gps-help').hidden = false;
 }
 
 /* =========================================================
@@ -231,7 +274,7 @@ function placeDraftMarker(pan){
 }
 function renderLocNote(){
   const n = $('loc-note'); n.classList.remove('warn');
-  if (!draft || draft.lat == null){ n.textContent = gpsError ? gpsError + '：地図をタップして位置を指定' : '位置を取得中…（地図をタップして指定も可）'; n.classList.add('warn'); return; }
+  if (!draft || draft.lat == null){ n.textContent = gpsError ? gpsError + '（タップで対処法）。地図をタップして指定もできます' : '位置を取得中…（地図をタップして指定も可）'; n.classList.add('warn'); return; }
   const src = {gps: `現在地（誤差 約${draft.acc}m）`, exif: '写真の位置情報', manual: '手動で指定'}[draft.src] || '';
   const d = distM(MAP.center, [draft.lat, draft.lng]);
   n.textContent = src + (d > MAP.radiusMeters ? `・${MAP.centerName}から${(d / 1000).toFixed(1)}km` : '');
@@ -370,6 +413,64 @@ function renderList(){
   em.hidden = !!visible().length;
   em.textContent = reports.length ? '条件に合う投稿はありません。' : 'まだ投稿はありません。「撮影して投稿」から最初の情報を登録できます。';
 }
+/* 投稿一覧のシート：上下にスライドして「見出しだけ／3割／8割」を切り替える */
+const SHEET_ORDER = ['min', 'mid', 'max'];
+function setSheet(state){
+  $('scr-map').dataset.sheet = state;
+  const sh = $('sheet-list'); sh.style.height = '';
+  $('btn-sheet').setAttribute('aria-expanded', String(state !== 'min'));
+}
+function setupSheetDrag(){
+  const sh = $('sheet-list'), grab = $('btn-sheet');
+  let startY = 0, startH = 0, moved = false, active = false;
+  const heights = () => {
+    const vh = window.innerHeight; const min = $('btn-sheet').offsetHeight + parseFloat(getComputedStyle(sh).paddingBottom || 0);
+    return {min, mid: vh * 0.34, max: vh * 0.8};
+  };
+  const down = e => {
+    if (window.matchMedia('(min-width: 760px)').matches) return;
+    active = true; moved = false; startY = e.clientY; startH = sh.getBoundingClientRect().height;
+    sh.classList.add('dragging'); grab.setPointerCapture && grab.setPointerCapture(e.pointerId);
+  };
+  const move = e => {
+    if (!active) return;
+    const dy = startY - e.clientY;
+    if (Math.abs(dy) > 6) moved = true;
+    if (!moved) return;
+    const h = heights();
+    sh.style.height = Math.max(h.min * 0.8, Math.min(window.innerHeight * 0.85, startH + dy)) + 'px';
+    e.preventDefault();
+  };
+  const up = e => {
+    if (!active) return; active = false; sh.classList.remove('dragging');
+    const cur = $('scr-map').dataset.sheet;
+    if (!moved){ // タップ：見出しだけ→3割→8割→見出しだけ
+      setSheet(cur === 'min' ? 'mid' : cur === 'mid' ? 'max' : 'min'); return;
+    }
+    const hNow = sh.getBoundingClientRect().height, h = heights(), dy = startY - e.clientY;
+    // 勢いよく払ったときは、その方向の次の段階へ
+    let target;
+    if (Math.abs(dy) > 60){
+      const i = SHEET_ORDER.indexOf(cur);
+      target = dy > 0 ? SHEET_ORDER[Math.min(2, i + 1)] : SHEET_ORDER[Math.max(0, i - 1)];
+      if (dy < -window.innerHeight * 0.35) target = 'min';
+      if (dy > window.innerHeight * 0.35) target = 'max';
+    } else {
+      target = SHEET_ORDER.reduce((a, k) => Math.abs(h[k] - hNow) < Math.abs(h[a] - hNow) ? k : a, 'min');
+    }
+    setSheet(target);
+  };
+  grab.addEventListener('pointerdown', down);
+  grab.addEventListener('pointermove', move);
+  grab.addEventListener('pointerup', up);
+  grab.addEventListener('pointercancel', up);
+  grab.addEventListener('click', e => e.preventDefault());
+  grab.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault();
+    const cur = $('scr-map').dataset.sheet; setSheet(cur === 'min' ? 'mid' : cur === 'mid' ? 'max' : 'min');
+  });
+}
+
 function renderPins(){
   if (!pinLayer) return;
   pinLayer.clearLayers();
@@ -383,7 +484,7 @@ function renderPins(){
 async function openDetail(id, fly){
   const r = reports.find(x => x.id === id); if (!r) return;
   selected = id;
-  if (fly && r.lat != null){ bigmap.flyTo([r.lat, r.lng], Math.max(bigmap.getZoom(), 16), {duration: .5}); $('sheet-list').classList.remove('open'); }
+  if (fly && r.lat != null){ bigmap.flyTo([r.lat, r.lng], Math.max(bigmap.getZoom(), 16), {duration: .5}); setSheet('min'); }
   const d = $('detail'); d.textContent = '';
   const head = el('div', 'head'); const h = el('h2', null, catOf(r.cat).label); h.id = 'd-title';
   const x = el('button', 'close', '×'); x.type = 'button'; x.setAttribute('aria-label', '閉じる'); x.addEventListener('click', closeDetail);
@@ -504,6 +605,10 @@ async function firebaseStore(){
    ========================================================= */
 async function boot(){
   $('btn-shutter').addEventListener('click', shoot);
+  $('gps-chip').addEventListener('click', () => { if (gpsError) openGpsHelp(); else if (!gps) retryGps(); });
+  $('loc-note').addEventListener('click', () => { if (gpsError) openGpsHelp(); });
+  $('gps-retry').addEventListener('click', () => { $('gps-help').hidden = true; retryGps(); });
+  $('gps-close').addEventListener('click', () => { $('gps-help').hidden = true; });
   $('file-camera').addEventListener('change', onFile);
   $('file-library').addEventListener('change', onFile);
   $('btn-nophoto').addEventListener('click', () => beginDraft(null, null));
@@ -515,7 +620,7 @@ async function boot(){
     Object.assign(draft, {lat: gps.lat, lng: gps.lng, acc: gps.acc, src: 'gps', moved: false}); placeDraftMarker(true);
   });
   $('post-form').addEventListener('submit', submit);
-  $('btn-sheet').addEventListener('click', () => { const s = $('sheet-list'); s.classList.toggle('open'); $('btn-sheet').setAttribute('aria-expanded', String(s.classList.contains('open'))); });
+  setupSheetDrag();
   $('show-done').addEventListener('change', e => { showDone = e.target.checked; render(); });
   $('btn-locate').addEventListener('click', () => { if (gps) bigmap.flyTo([gps.lat, gps.lng], 17, {duration: .5}); else toast(gpsError || '現在地をまだ取得できていません'); });
   $('detail-modal').addEventListener('click', e => { if (e.target === $('detail-modal')) closeDetail(); });
