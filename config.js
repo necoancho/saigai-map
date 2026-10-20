@@ -2,12 +2,12 @@
 // Firebase の設定値を貼り付けると、投稿が全員で共有されます。
 // 空のまま（apiKey が ""）だと「お試しモード」になり、投稿はこの端末の中だけに保存されます。
 export const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCKSz0aRidueAOPnwCRJRM5NywMy-pBBR4",
+  authDomain: "matsunaga-saigai.firebaseapp.com",
+  projectId: "matsunaga-saigai",
+  storageBucket: "matsunaga-saigai.firebasestorage.app",
+  messagingSenderId: "1097066718566",
+  appId: "1:1097066718566:web:2653311e2206964e8954a7"
 };
 
 // 地図の中心と範囲（初期値：松永地区公民館を中心に半径3km）
