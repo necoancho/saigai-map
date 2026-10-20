@@ -424,8 +424,8 @@ function setupSheetDrag(){
   const sh = $('sheet-list'), grab = $('btn-sheet');
   let startY = 0, startH = 0, moved = false, active = false;
   const heights = () => {
-    const vh = window.innerHeight; const min = $('btn-sheet').offsetHeight + parseFloat(getComputedStyle(sh).paddingBottom || 0);
-    return {min, mid: vh * 0.34, max: vh * 0.8};
+    const vh = $('scr-map').clientHeight; const min = $('btn-sheet').offsetHeight + parseFloat(getComputedStyle(sh).paddingBottom || 0);
+    return {min, mid: vh * 0.34, max: vh};
   };
   const down = e => {
     if (window.matchMedia('(min-width: 760px)').matches) return;
@@ -438,7 +438,7 @@ function setupSheetDrag(){
     if (Math.abs(dy) > 6) moved = true;
     if (!moved) return;
     const h = heights();
-    sh.style.height = Math.max(h.min * 0.8, Math.min(window.innerHeight * 0.85, startH + dy)) + 'px';
+    sh.style.height = Math.max(h.min * 0.8, Math.min(h.max, startH + dy)) + 'px';
     e.preventDefault();
   };
   const up = e => {
@@ -453,8 +453,8 @@ function setupSheetDrag(){
     if (Math.abs(dy) > 60){
       const i = SHEET_ORDER.indexOf(cur);
       target = dy > 0 ? SHEET_ORDER[Math.min(2, i + 1)] : SHEET_ORDER[Math.max(0, i - 1)];
-      if (dy < -window.innerHeight * 0.35) target = 'min';
-      if (dy > window.innerHeight * 0.35) target = 'max';
+      if (dy < -h.max * 0.35) target = 'min';
+      if (dy > h.max * 0.35) target = 'max';
     } else {
       target = SHEET_ORDER.reduce((a, k) => Math.abs(h[k] - hNow) < Math.abs(h[a] - hNow) ? k : a, 'min');
     }

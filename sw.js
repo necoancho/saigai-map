@@ -1,5 +1,5 @@
 // オフライン対応：アプリ本体と、一度表示した地図タイルを端末に保存する
-const APP = 'saigai-app-v4';
+const APP = 'saigai-app-v5';
 const TILES = 'saigai-tiles-v1';
 const TILE_LIMIT = 3000;
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'config.js', 'manifest.webmanifest',

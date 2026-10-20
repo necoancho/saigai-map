@@ -122,12 +122,13 @@ textarea.input{resize:vertical;min-height:6.5em}
 .locate-btn{position:absolute;right:max(12px,var(--sar));top:calc(var(--sat) + 76px);z-index:600;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;box-shadow:0 2px 8px rgb(0 0 0 / .15)}
 .locate-btn svg{width:24px;height:24px}
 
-.sheet-list{position:absolute;left:0;right:0;bottom:0;z-index:700;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgb(0 0 0 / .18);height:34vh;display:flex;flex-direction:column;overflow:hidden;transition:height .25s ease;padding:0 max(14px,var(--sar)) calc(var(--sab) + 84px) max(14px,var(--sal));touch-action:none}
+.sheet-list{position:absolute;left:0;right:0;bottom:0;z-index:700;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgb(0 0 0 / .18);height:34%;max-height:100%;display:flex;flex-direction:column;overflow:hidden;transition:height .25s ease;padding:0 max(14px,var(--sar)) calc(var(--sab) + 84px) max(14px,var(--sal));touch-action:none}
 .sheet-list.dragging{transition:none}
 /* 一覧の3段階：min＝見出しだけ／mid＝3割／max＝8割 */
 .map-scr[data-sheet="min"] .sheet-list{height:calc(var(--sab) + 52px);padding-bottom:var(--sab)}
 .map-scr[data-sheet="min"] .list-tools,.map-scr[data-sheet="min"] .list,.map-scr[data-sheet="min"] .empty{visibility:hidden}
-.map-scr[data-sheet="max"] .sheet-list{height:80vh}
+/* 最大：画面の上端にぴったり合わせる（vh は iPhone の表示領域とずれるため使わない） */
+.map-scr[data-sheet="max"] .sheet-list{height:100%;border-radius:0;padding-top:var(--sat)}
 .map-scr[data-sheet="min"] .fab{bottom:calc(var(--sab) + 64px)}
 .sheet-list .list{touch-action:pan-y}
 .grabber{background:none;border:0;padding:10px 0 8px;cursor:grab;touch-action:none;flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
